@@ -17,17 +17,18 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home Screen'),
-        backgroundColor: Colors.amberAccent,
       ),
 
       body: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.only(top: screenHeight * 0.05),
+          padding: EdgeInsets.only(top: screenHeight * 0.10),
+
           child: Center(
             child: Wrap(
               spacing: 16,
               runSpacing: 16,
               alignment: WrapAlignment.center,
+
               children: [
                 SizedBox(
                   width: 150,
@@ -41,15 +42,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       );
                     },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.black,
-                      side: const BorderSide(color: Colors.black12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      textStyle: const TextStyle(fontSize: 16),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.school_outlined, size: 48), // Icono de inicio
+                        SizedBox(height: 8),
+                        Text('Aula 1'),
+                      ],
                     ),
-                    child: const Text('Aula 1'),
                   ),
                 ),
 
@@ -65,15 +65,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       );
                     },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.black,
-                      side: const BorderSide(color: Colors.black12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      textStyle: const TextStyle(fontSize: 16),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.school_outlined, size: 48), // Icono de inicio
+                        SizedBox(height: 8),
+                        Text('Aula 2'),
+                      ],
                     ),
-                    child: const Text('Aula 2'),
                   ),
                 ),
 
@@ -89,15 +88,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       );
                     },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.black,
-                      side: const BorderSide(color: Colors.black12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      textStyle: const TextStyle(fontSize: 16),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.school_outlined, size: 48), // Icono de inicio
+                        SizedBox(height: 8),
+                        Text('Aula 3'),
+                      ],
                     ),
-                    child: const Text('Aula 3'),
                   ),
                 ),
 
@@ -113,15 +111,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       );
                     },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.black,
-                      side: const BorderSide(color: Colors.black12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      textStyle: const TextStyle(fontSize: 16),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.school_outlined, size: 48), // Icono de inicio
+                        SizedBox(height: 8),
+                        Text('Aula 4'),
+                      ],
                     ),
-                    child: const Text('Aula 4'),
                   ),
                 ),
 
@@ -137,15 +134,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       );
                     },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.black,
-                      side: const BorderSide(color: Colors.black12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      textStyle: const TextStyle(fontSize: 16),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.school_outlined, size: 48), // Icono de inicio
+                        SizedBox(height: 8),
+                        Text('Aula 5'),
+                      ],
                     ),
-                    child: const Text('Aula 5'),
                   ),
                 ),
 
@@ -161,15 +157,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       );
                     },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.black,
-                      side: const BorderSide(color: Colors.black12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      textStyle: const TextStyle(fontSize: 16),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.school_outlined, size: 48), // Icono de inicio
+                        SizedBox(height: 8),
+                        Text('Aula 6'),
+                      ],
                     ),
-                    child: const Text('Aula 6'),
                   ),
                 ),
               ],

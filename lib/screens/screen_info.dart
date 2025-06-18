@@ -14,7 +14,7 @@ class _ScreenInfoState extends State<ScreenInfo> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Screen Info'),
-        backgroundColor: Colors.amberAccent,
+
       ),
 
       body: const Center(
