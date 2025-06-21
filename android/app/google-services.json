@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "946273216492",
+    "project_id": "aulas-app-d69a0",
+    "storage_bucket": "aulas-app-d69a0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:946273216492:android:127aec3b1ec45212c642c9",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCda10jAwhstB2nlVuik4Do1G1b-CeDgUI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

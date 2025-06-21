@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'screen_info.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -10,15 +11,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
 
-//Lista de nombres de los botones
-final List<String> aulas = [
-    'Aula 1',
-    'Aula 2',
-    'Aula 3',
-    'Aula 4',
-    'Aula 5',
-    'Aula 6',
-  ];
+final CollectionReference aulasCollection = FirebaseFirestore.instance.collection('aulas');
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +23,25 @@ final List<String> aulas = [
         title: const Text('Home Screen'),
       ),
 
-      body: SingleChildScrollView(
+      body: FutureBuilder<QuerySnapshot>(
+        future: aulasCollection.get(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(child: Text('No hay aulas disponibles.'));
+          }
+
+          final aulas = snapshot.data!.docs;
+
+      
+      return SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.only(top: screenHeight * 0.05),
 
@@ -40,10 +51,14 @@ final List<String> aulas = [
               runSpacing: 16,
               alignment: WrapAlignment.center,
 
-              children: aulas.map((aula) => _buildAulaButton(aula)).toList(),
+              children: aulas
+                .map((doc) => _buildAulaButton(doc['nombre']))
+                .toList(),
+                ),
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
