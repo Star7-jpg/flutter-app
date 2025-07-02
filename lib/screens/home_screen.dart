@@ -10,8 +10,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
-final CollectionReference aulasCollection = FirebaseFirestore.instance.collection('aulas');
+  final CollectionReference aulasCollection = FirebaseFirestore.instance
+      .collection('aulas');
 
   @override
   Widget build(BuildContext context) {
@@ -19,12 +19,12 @@ final CollectionReference aulasCollection = FirebaseFirestore.instance.collectio
         MediaQuery.of(context).size.height; //Obtener el alto de la pantalla
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home Screen'),
-      ),
+      appBar: AppBar(title: const Text('Home Screen')),
 
-      body: FutureBuilder<QuerySnapshot>(
-        future: aulasCollection.get(),
+      body: StreamBuilder<QuerySnapshot>(
+        stream:
+            aulasCollection
+                .snapshots(), //Escucha los cambios en la colección 'aulas'
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -40,20 +40,24 @@ final CollectionReference aulasCollection = FirebaseFirestore.instance.collectio
 
           final aulas = snapshot.data!.docs;
 
-      
-      return SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.only(top: screenHeight * 0.05),
+          return SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.only(top: screenHeight * 0.05),
 
-          child: Center(
-            child: Wrap(
-              spacing: 16,
-              runSpacing: 16,
-              alignment: WrapAlignment.center,
+              child: Center(
+                child: Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
+                  alignment: WrapAlignment.center,
+                  children:
+                      aulas.map((doc) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        final name = data['name'] ?? 'Aula sin nombre';
+                        final description =
+                            data['description'] ?? 'Sin descripción';
 
-              children: aulas
-                .map((doc) => _buildAulaButton(doc['nombre']))
-                .toList(),
+                        return _buildAulaButton(name, description);
+                      }).toList(),
                 ),
               ),
             ),
@@ -63,9 +67,8 @@ final CollectionReference aulasCollection = FirebaseFirestore.instance.collectio
     );
   }
 
-
-//Función reutilizada para crear los botones de las aulas
-  Widget _buildAulaButton(String label) {
+  //Función reutilizada para crear los botones de las aulas
+  Widget _buildAulaButton(String name, String description) {
     return SizedBox(
       width: 150,
       height: 220,
@@ -73,7 +76,10 @@ final CollectionReference aulasCollection = FirebaseFirestore.instance.collectio
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const ScreenInfo()),
+            MaterialPageRoute(
+              builder:
+                  (context) => ScreenInfo(name: name, description: description),
+            ),
           );
         },
         child: Column(
@@ -81,7 +87,7 @@ final CollectionReference aulasCollection = FirebaseFirestore.instance.collectio
           children: [
             const Icon(Icons.school_outlined, size: 48),
             const SizedBox(height: 8),
-            Text(label),
+            Text(name),
           ],
         ),
       ),

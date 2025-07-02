@@ -14,7 +14,7 @@ class MainApp extends StatelessWidget {
         brightness: Brightness.light,
         scaffoldBackgroundColor: Colors.white,
 
-        // 🔲 AppBar minimalista
+        // AppBar minimalista
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.white,
           foregroundColor: Colors.black,
@@ -27,14 +27,14 @@ class MainApp extends StatelessWidget {
           ),
         ),
 
-        // 🔤 Tipografía global
+        // Tipografía global
         textTheme: const TextTheme(
           bodyMedium: TextStyle(fontSize: 16, color: Colors.black),
           titleMedium: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
           headlineSmall: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
 
-        // 🎯 Estilo de botones
+        // Estilo de botones
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.black,
@@ -46,7 +46,7 @@ class MainApp extends StatelessWidget {
           ),
         ),
 
-        // 📝 Estilo para campos de texto (InputDecoration)
+        // Estilo para campos de texto (InputDecoration)
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.grey[100],
@@ -65,7 +65,7 @@ class MainApp extends StatelessWidget {
           hintStyle: const TextStyle(color: Colors.black38),
         ),
 
-        // 🔘 Iconos en negro y tamaño estándar
+        // Iconos en negro y tamaño estándar
         iconTheme: const IconThemeData(color: Colors.black, size: 24),
       ),
     );

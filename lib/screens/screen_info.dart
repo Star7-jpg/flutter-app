@@ -1,26 +1,19 @@
 import 'package:flutter/material.dart';
 
-class ScreenInfo extends StatefulWidget {
-  const ScreenInfo({super.key});
+class ScreenInfo extends StatelessWidget {
+  final String name;
+  final String description;
 
-  @override
-  State<ScreenInfo> createState() => _ScreenInfoState();
-}
+  const ScreenInfo({super.key, required this.name, required this.description});
 
-class _ScreenInfoState extends State<ScreenInfo> {
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Screen Info'),
+      appBar: AppBar(title: Text(name)),
 
-      ),
-
-      body: const Center(
-        child: Text('Pantalla de Información',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Text(description, style: const TextStyle(fontSize: 18.0)),
       ),
     );
   }
