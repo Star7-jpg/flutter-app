@@ -53,10 +53,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       aulas.map((doc) {
                         final data = doc.data() as Map<String, dynamic>;
                         final name = data['name'] ?? 'Aula sin nombre';
-                        final description =
-                            data['description'] ?? 'Sin descripción';
+                        final description = data['description'] ?? 'Sin descripción';
+                        final isAvailable = data['is_available'] ?? true;
 
-                        return _buildAulaButton(name, description);
+                        return _buildAulaButton(name, description, isAvailable);
                       }).toList(),
                 ),
               ),
@@ -68,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   //Función reutilizada para crear los botones de las aulas
-  Widget _buildAulaButton(String name, String description) {
+  Widget _buildAulaButton(String name, String description, bool isAvailable) {
     return SizedBox(
       width: 150,
       height: 220,
@@ -78,14 +78,22 @@ class _HomeScreenState extends State<HomeScreen> {
             context,
             MaterialPageRoute(
               builder:
-                  (context) => ScreenInfo(name: name, description: description),
+                  (context) => ScreenInfo(
+                    name: name, 
+                    description: description,
+                    isAvailable: isAvailable,
+                  ),
             ),
           );
         },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.school_outlined, size: 48),
+            Icon(
+              isAvailable ? Icons.school_outlined : Icons.school_outlined,
+              size: 48,
+              color: isAvailable ? Colors.black87 : Colors.redAccent,
+            ),
             const SizedBox(height: 8),
             Text(name),
           ],
