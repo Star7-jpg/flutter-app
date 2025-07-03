@@ -24,14 +24,19 @@ class ScreenInfo extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              description,
-              style: const TextStyle(fontSize: 18.0),
-            ),
-            const SizedBox(height: 20),
+              //Título grande
+              name,
+              style: Theme.of(context).textTheme.headlineSmall,
+              ),
+
+            const SizedBox(height: 16),
+
+            //Estado de disponibilidad
             Row(children: [
               Icon(
-                isAvailable ? Icons.check_circle : Icons.cancel,
+                isAvailable ? Icons.check_circle : Icons.cancel_outlined,
                 color: isAvailable ? Colors.green : Colors.redAccent,
+                size: 24,
               ),
               const SizedBox(width: 8),
               Text(
@@ -42,7 +47,27 @@ class ScreenInfo extends StatelessWidget {
                   fontWeight: FontWeight.w500
                 ),
               )
-            ],)
+            ],
+            ),
+            const SizedBox(height: 24),
+
+            //Descripción del aula
+            Card(
+              elevation: 0,
+              color: Colors.grey[100],
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  description,
+                  style: const TextStyle(
+                    fontSize: 16.0),
+                ),
+              ),
+            )
+
           ],)
       ),
     );
