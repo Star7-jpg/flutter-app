@@ -31,10 +31,10 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       // Si el login fue exitoso, redirige al HomeScreen
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
+ //     Navigator.pushReplacement(
+ //       context,
+ //       MaterialPageRoute(builder: (context) => const HomeScreen()),
+ //     );
     } on FirebaseAuthException catch (e) {
       setState(() {
         _error = e.message;

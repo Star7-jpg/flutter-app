@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'screen_info.dart';
@@ -19,7 +20,37 @@ class _HomeScreenState extends State<HomeScreen> {
         MediaQuery.of(context).size.height; //Obtener el alto de la pantalla
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Home Screen')),
+      appBar: AppBar(
+        title: const Text('Home Screen'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Cerrar sesión',
+            onPressed: () async {
+              final shouldLogout = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Cerrar sesión'),
+                  content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context,false),
+                      child: const Text('Cancelar'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Cerrar sesión'),),
+                  ],
+                ),
+              );
+
+              if (shouldLogout == true) {
+                await FirebaseAuth.instance.signOut();
+              }
+            },
+          ),
+        ],
+      ),
 
       body: StreamBuilder<QuerySnapshot>(
         stream:
@@ -53,7 +84,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       aulas.map((doc) {
                         final data = doc.data() as Map<String, dynamic>;
                         final name = data['name'] ?? 'Aula sin nombre';
-                        final description = data['description'] ?? 'Sin descripción';
+                        final description =
+                            data['description'] ?? 'Sin descripción';
                         final isAvailable = data['is_available'] ?? true;
 
                         return _buildAulaButton(name, description, isAvailable);
@@ -79,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
             MaterialPageRoute(
               builder:
                   (context) => ScreenInfo(
-                    name: name, 
+                    name: name,
                     description: description,
                     isAvailable: isAvailable,
                   ),
