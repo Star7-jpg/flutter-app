@@ -27,30 +27,29 @@ class _ScreenInfoState extends State<ScreenInfo>
   void initState() {
     super.initState();
 
-    // 1. Configura el controlador de animación
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
 
-    // 2. Define desde dónde se desliza (abajo en este caso)
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(1, 0), // desde abajo
-      end: Offset.zero, // hasta su posición final
+      begin: const Offset(1, 0),
+      end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
-    // 3. Inicia la animación
     _controller.forward();
   }
 
   @override
   void dispose() {
-    _controller.dispose(); // Libera el controlador
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final aulaDoc = FirebaseFirestore.instance.collection('aulas').doc(widget.name);
+
     return Scaffold(
       appBar: AppBar(title: Text(widget.name)),
       body: SlideTransition(
@@ -99,11 +98,48 @@ class _ScreenInfoState extends State<ScreenInfo>
                   ),
                 ),
               ),
-
+              const SizedBox(height: 16),
               OutlinedButton.icon(
                 icon: const Icon(Icons.schedule),
                 label: const Text('Marcar como no disponible'),
                 onPressed: () => _selectUnavailableDateTime(context),
+              ),
+              const SizedBox(height: 24),
+
+              // 🔽 LISTADO DE APARTADOS 🔽
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: aulaDoc
+                      .collection('no_disponible')
+                      .orderBy('timestamp')
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const Center(child: Text('No hay apartados registrados.'));
+                    }
+
+                    final apartados = snapshot.data!.docs;
+
+                    return ListView.separated(
+                      itemCount: apartados.length,
+                      separatorBuilder: (_, __) => const Divider(),
+                      itemBuilder: (context, index) {
+                        final data = apartados[index].data() as Map<String, dynamic>;
+                        final fechaLegible = data['fecha_legible'] ?? 'Sin fecha';
+
+                        return ListTile(
+                          leading: const Icon(Icons.event_busy, color: Colors.red),
+                          title: Text("Apartado"),
+                          subtitle: Text(fechaLegible),
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ],
           ),
@@ -115,7 +151,6 @@ class _ScreenInfoState extends State<ScreenInfo>
   void _selectUnavailableDateTime(BuildContext context) async {
     final today = DateTime.now();
 
-    //Selecciona la fecha
     final DateTime? selectedDate = await showDatePicker(
       context: context,
       initialDate: today,
@@ -123,14 +158,12 @@ class _ScreenInfoState extends State<ScreenInfo>
       lastDate: today.add(const Duration(days: 30)),
       helpText: 'Selecciona un día hábil',
       selectableDayPredicate: (DateTime day) {
-        // Solo permite seleccionar días hábiles (lunes a viernes)
         return day.weekday >= 1 && day.weekday <= 5;
       },
     );
 
     if (selectedDate == null) return;
 
-    // Luego selecciona la hora
     final TimeOfDay? selectedTime = await showTimePicker(
       context: context,
       initialTime: const TimeOfDay(hour: 7, minute: 0),
@@ -139,22 +172,19 @@ class _ScreenInfoState extends State<ScreenInfo>
 
     if (selectedTime == null) return;
 
-    // Validar que la fecha esté entre 7:00 y 20:00
     final isValidHour = selectedTime.hour >= 7 && selectedTime.hour < 20;
 
     if (!isValidHour) {
       showDialog(
         context: context,
-        builder:
-            (context) => const AlertDialog(
-              title: Text('Hora no válida'),
-              content: Text('La hora debe estar entre las 7:00 y las 20:00.'),
-            ),
+        builder: (context) => const AlertDialog(
+          title: Text('Hora no válida'),
+          content: Text('La hora debe estar entre las 7:00 y las 20:00.'),
+        ),
       );
       return;
     }
 
-    //Combinar fecha y hora
     final unavailableDateTime = DateTime(
       selectedDate.year,
       selectedDate.month,
@@ -163,16 +193,11 @@ class _ScreenInfoState extends State<ScreenInfo>
       selectedTime.minute,
     );
 
-    //Guardar en firestore
-    final aulaDoc = FirebaseFirestore.instance
-        .collection('aulas')
-        .doc(widget.name);
+    final aulaDoc = FirebaseFirestore.instance.collection('aulas').doc(widget.name);
 
     await aulaDoc.collection('no_disponible').add({
       'timestamp': unavailableDateTime.toIso8601String(),
-      'fecha_legible': DateFormat(
-        'dd/MM/yyyy - HH:mm',
-      ).format(unavailableDateTime),
+      'fecha_legible': DateFormat('dd/MM/yyyy - HH:mm').format(unavailableDateTime),
       'creado_en': FieldValue.serverTimestamp(),
     });
 
