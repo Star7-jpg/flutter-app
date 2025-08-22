@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -29,12 +28,6 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-
-      // Si el login fue exitoso, redirige al HomeScreen
- //     Navigator.pushReplacement(
- //       context,
- //       MaterialPageRoute(builder: (context) => const HomeScreen()),
- //     );
     } on FirebaseAuthException catch (e) {
       setState(() {
         _error = e.message;
@@ -50,42 +43,74 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Iniciar Sesión')),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              if (_error != null)
-                Text(_error!, style: const TextStyle(color: Colors.red)),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth > 600; // 📱 vs 💻
+          return Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isWide ? 400 : double.infinity, // 🔥 centrado en pantallas grandes
+                ),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (_error != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Text(
+                            _error!,
+                            style: const TextStyle(color: Colors.red),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
 
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Correo electrónico'),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) =>
-                    value!.isEmpty ? 'Introduce tu correo' : null,
+                      // Email
+                      TextFormField(
+                        controller: _emailController,
+                        decoration: const InputDecoration(
+                          labelText: 'Correo electrónico',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (value) =>
+                            value!.isEmpty ? 'Introduce tu correo' : null,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Password
+                      TextFormField(
+                        controller: _passwordController,
+                        decoration: const InputDecoration(
+                          labelText: 'Contraseña',
+                          border: OutlineInputBorder(),
+                        ),
+                        obscureText: true,
+                        validator: (value) =>
+                            value!.isEmpty ? 'Introduce tu contraseña' : null,
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Botón
+                      _isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : SizedBox(
+                              height: 48,
+                              child: OutlinedButton(
+                                onPressed: _login,
+                                child: const Text('Entrar'),
+                              ),
+                            ),
+                    ],
+                  ),
+                ),
               ),
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _passwordController,
-                decoration: const InputDecoration(labelText: 'Contraseña'),
-                obscureText: true,
-                validator: (value) =>
-                    value!.isEmpty ? 'Introduce tu contraseña' : null,
-              ),
-              const SizedBox(height: 32),
-
-              _isLoading
-                  ? const CircularProgressIndicator()
-                  : OutlinedButton(
-                      onPressed: _login,
-                      child: const Text('Entrar'),
-                    ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
