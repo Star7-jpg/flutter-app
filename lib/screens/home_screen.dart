@@ -27,66 +27,92 @@ IconButton(
   icon: const Icon(Icons.logout),
   tooltip: 'Cerrar sesión',
   onPressed: () async {
-    final shouldLogout = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) {
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.4,
-          minChildSize: 0.2,
-          maxChildSize: 0.8,
-          builder: (context, scrollController) {
-            return SingleChildScrollView(
-              controller: scrollController,
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Cerrar sesión',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    '¿Estás seguro de que quieres cerrar sesión?',
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 20),
-                  
-                  // 🔥 Botones en vertical
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text('Cerrar sesión'),
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    final shouldLogout = screenWidth <= 400
+        ? await showModalBottomSheet<bool>(
+            context: context,
+            isScrollControlled: true,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            builder: (context) {
+              return DraggableScrollableSheet(
+                expand: false,
+                initialChildSize: 0.4,
+                minChildSize: 0.2,
+                maxChildSize: 0.8,
+                builder: (context, scrollController) {
+                  return SingleChildScrollView(
+                    controller: scrollController,
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Cerrar sesión',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          '¿Estás seguro de que quieres cerrar sesión?',
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.redAccent,
+                            ),
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text('Cerrar sesión'),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Cancelar'),
+                          ),
+                        ),
+                      ],
                     ),
+                  );
+                },
+              );
+            },
+          )
+        : await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Cerrar sesión'),
+              content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancelar'),
+                ),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.redAccent,
                   ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancelar'),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Cerrar sesión'),
+                ),
+              ],
+            ),
+          );
 
     if (shouldLogout == true) {
       await FirebaseAuth.instance.signOut();
     }
   },
 )
+
         ],
       ),
 
