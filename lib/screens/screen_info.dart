@@ -46,9 +46,9 @@ class _ScreenInfoState extends State<ScreenInfo>
     super.dispose();
   }
 
-  bool get _isWatch {
-    final size = MediaQuery.of(context).size;
-    return size.width < 300;
+  bool _isWatch(BuildContext context) {
+    final shortestSide = MediaQuery.of(context).size.shortestSide;
+    return shortestSide < 300; // smartwatch
   }
 
   @override
@@ -57,99 +57,91 @@ class _ScreenInfoState extends State<ScreenInfo>
       appBar: AppBar(title: Text(widget.name)),
       body: SlideTransition(
         position: _slideAnimation,
-        child: CustomScrollView(
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.all(24.0),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  Text(
-                    widget.name,
-                    style: Theme.of(context).textTheme.headlineSmall,
+        child: SingleChildScrollView( // ✅ scrolleable para smartwatch
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.name,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Icon(
+                    widget.isAvailable
+                        ? Icons.check_circle_outline
+                        : Icons.cancel_outlined,
+                    color: widget.isAvailable ? Colors.green : Colors.red,
                   ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Icon(
-                        widget.isAvailable
-                            ? Icons.check_circle_outline
-                            : Icons.cancel_outlined,
+                  const SizedBox(width: 8),
+                  Flexible( // ✅ evita overflow
+                    child: Text(
+                      widget.isAvailable ? 'Disponible' : 'No disponible',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
                         color: widget.isAvailable ? Colors.green : Colors.red,
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        widget.isAvailable ? 'Disponible' : 'No disponible',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: widget.isAvailable ? Colors.green : Colors.red,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Card(
-                    elevation: 0,
-                    color: Colors.grey[100],
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Text(
-                        widget.description,
-                        style: const TextStyle(fontSize: 16),
-                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(height: 16),
-
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.schedule),
-                    label: const Text('Marcar como no disponible'),
-                    onPressed: () => _selectUnavailableDateTime(context),
-                  ),
-                  const SizedBox(height: 24),
-
-                  Text(
-                    'Apartados registrados:',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                ]),
+                ],
               ),
-            ),
+              const SizedBox(height: 24),
+              Card(
+                elevation: 0,
+                color: Colors.grey[100],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    widget.description,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
 
-            // Lista de apartados en SliverList
-            StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('aulas')
-                  .doc(widget.name)
-                  .collection('no_disponible')
-                  .orderBy('timestamp')
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
+              OutlinedButton.icon(
+                icon: const Icon(Icons.schedule),
+                label: const Text('Marcar como no disponible'),
+                onPressed: () => _selectUnavailableDateTime(context),
+              ),
 
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const SliverFillRemaining(
-                    child: Center(child: Text('No hay apartados registrados.')),
-                  );
-                }
+              const SizedBox(height: 16),
+              Text("Apartados registrados:",
+                  style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
 
-                final apartados = snapshot.data!.docs;
+              // ✅ Lista en vivo desde Firestore
+              StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('aulas')
+                    .doc(widget.name)
+                    .collection('no_disponible')
+                    .orderBy('timestamp')
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final docs = snapshot.data!.docs;
 
-                return SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final doc = apartados[index];
-                      final data = doc.data() as Map<String, dynamic>;
-                      final fechaLegible =
-                          data['fecha_legible'] ?? 'Sin fecha';
+                  if (docs.isEmpty) {
+                    return const Text("No hay apartados aún.");
+                  }
+
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: docs.length,
+                    itemBuilder: (context, index) {
+                      final doc = docs[index];
+                      final fechaLegible = doc['fecha_legible'];
 
                       return Dismissible(
                         key: Key(doc.id),
@@ -157,92 +149,132 @@ class _ScreenInfoState extends State<ScreenInfo>
                         background: Container(
                           color: Colors.red,
                           alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          padding: const EdgeInsets.only(right: 16),
                           child: const Icon(Icons.delete, color: Colors.white),
                         ),
-                        confirmDismiss: (direction) async {
-                          if (_isWatch) {
-                            // smartwatch → bottomSheet
-                            return await showModalBottomSheet<bool>(
-                              context: context,
-                              builder: (context) => Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  ListTile(
-                                    leading: const Icon(Icons.warning),
-                                    title: Text(
-                                        '¿Eliminar apartado del $fechaLegible?'),
-                                  ),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(false),
-                                        child: const Text('Cancelar'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(true),
-                                        child: const Text('Eliminar'),
-                                      ),
-                                    ],
-                                  )
-                                ],
-                              ),
-                            );
-                          } else {
-                            // smartphone → AlertDialog
-                            return await showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('Eliminar apartado'),
-                                content: Text(
-                                    '¿Quieres eliminar el apartado del $fechaLegible?'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(false),
-                                    child: const Text('Cancelar'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(true),
-                                    child: const Text('Eliminar'),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
+                        confirmDismiss: (_) async {
+                          return await _confirmDelete(context, fechaLegible);
                         },
-                        onDismissed: (direction) async {
+                        onDismissed: (_) async {
                           await doc.reference.delete();
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content: Text(
-                                    'Apartado del $fechaLegible eliminado')),
+                            SnackBar(content: Text("Apartado eliminado")),
                           );
                         },
-                        child: ListTile(
-                          leading: const Icon(Icons.event_busy),
-                          title: Text(fechaLegible),
+                        child: Card(
+                          child: ListTile(
+                            leading: const Icon(Icons.event_busy),
+                            title: Text(fechaLegible),
+                          ),
                         ),
                       );
                     },
-                    childCount: apartados.length,
-                  ),
-                );
-              },
-            ),
-          ],
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
+Future<bool?> _confirmDelete(BuildContext context, String fechaLegible) async {
+  if (_isWatch(context)) {
+    // Smartwatch → bottomSheet deslizable con estilo como home_screen
+    return await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.4,
+          minChildSize: 0.2,
+          maxChildSize: 0.9,
+          builder: (context, scrollController) {
+            return SingleChildScrollView(
+              controller: scrollController,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.warning, color: Colors.red),
+                      title: Text(
+                        '¿Eliminar apartado del $fechaLegible?',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Botón rojo eliminar
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text('Eliminar', style: TextStyle(fontSize: 16)),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Botón cancelar
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        style: OutlinedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: const Text('Cancelar', style: TextStyle(fontSize: 16)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  } else {
+    // Smartphone → AlertDialog clásico
+    return await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Confirmar eliminación"),
+        content: Text("¿Eliminar apartado del $fechaLegible?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text("Cancelar"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text("Eliminar"),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
   void _selectUnavailableDateTime(BuildContext context) async {
     final today = DateTime.now();
 
+    // Selecciona la fecha
     final DateTime? selectedDate = await showDatePicker(
       context: context,
       initialDate: today,
@@ -256,21 +288,23 @@ class _ScreenInfoState extends State<ScreenInfo>
 
     if (selectedDate == null) return;
 
+    // Selecciona la hora
     final TimeOfDay? selectedTime = await showTimePicker(
       context: context,
-      initialTime: const TimeOfDay(hour: 8, minute: 0),
+      initialTime: const TimeOfDay(hour: 7, minute: 0),
       helpText: 'Selecciona una hora',
     );
 
     if (selectedTime == null) return;
 
-    final isValidHour = selectedTime.hour >= 8 && selectedTime.hour < 20;
+    final isValidHour = selectedTime.hour >= 7 && selectedTime.hour < 20;
+
     if (!isValidHour) {
       showDialog(
         context: context,
         builder: (context) => const AlertDialog(
           title: Text('Hora no válida'),
-          content: Text('La hora debe estar entre las 8:00 y las 20:00.'),
+          content: Text('La hora debe estar entre las 7:00 y las 20:00.'),
         ),
       );
       return;
@@ -283,17 +317,6 @@ class _ScreenInfoState extends State<ScreenInfo>
       selectedTime.hour,
       selectedTime.minute,
     );
-
-    if (unavailableDateTime.isBefore(today)) {
-      showDialog(
-        context: context,
-        builder: (context) => const AlertDialog(
-          title: Text('Fecha no válida'),
-          content: Text('No puedes registrar horas en el pasado.'),
-        ),
-      );
-      return;
-    }
 
     final aulaDoc =
         FirebaseFirestore.instance.collection('aulas').doc(widget.name);
