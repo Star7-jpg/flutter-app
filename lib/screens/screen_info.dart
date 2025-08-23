@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -272,70 +273,149 @@ Future<bool?> _confirmDelete(BuildContext context, String fechaLegible) async {
 
 
   void _selectUnavailableDateTime(BuildContext context) async {
-    final today = DateTime.now();
+  final now = DateTime.now();
 
-    // Selecciona la fecha
-    final DateTime? selectedDate = await showDatePicker(
-      context: context,
-      initialDate: today,
-      firstDate: today,
-      lastDate: today.add(const Duration(days: 30)),
-      helpText: 'Selecciona un día hábil',
-      selectableDayPredicate: (DateTime day) {
-        return day.weekday >= 1 && day.weekday <= 5;
-      },
+  DateTime? selectedDate;
+  TimeOfDay? selectedTime;
+
+  if (_isWatch(context)) {
+    // Smartwatch → BottomSheet
+final result = await showModalBottomSheet<Map<String, dynamic>>(
+  context: context,
+  isScrollControlled: true,
+  shape: const RoundedRectangleBorder(
+    borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+  ),
+  builder: (context) {
+    DateTime tempDate = now;
+    TimeOfDay tempTime = const TimeOfDay(hour: 8, minute: 0);
+
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+          left: 16,
+          right: 16,
+          top: 16,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Selecciona fecha y hora',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 100, // Reducido para evitar overflow
+              child: CupertinoDatePicker(
+                mode: CupertinoDatePickerMode.date,
+                minimumDate: now,
+                maximumDate: now.add(const Duration(days: 30)),
+                onDateTimeChanged: (date) => tempDate = date,
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 100, // Reducido para evitar overflow
+              child: CupertinoDatePicker(
+                mode: CupertinoDatePickerMode.time,
+                initialDateTime: DateTime(now.year, now.month, now.day, 8),
+                use24hFormat: true,
+                onDateTimeChanged: (dateTime) => tempTime = TimeOfDay(hour: dateTime.hour, minute: dateTime.minute),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop({
+                  'date': tempDate,
+                  'time': tempTime,
+                }),
+                child: const Text('Guardar'),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancelar'),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
+  },
+);
 
+
+    if (result == null) return;
+
+    selectedDate = result['date'] as DateTime;
+    selectedTime = result['time'] as TimeOfDay;
+  } else {
+    // Smartphone → DatePicker + TimePicker
+    selectedDate = await showDatePicker(
+      context: context,
+      initialDate: now,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 30)),
+      helpText: 'Selecciona un día hábil',
+      selectableDayPredicate: (d) => d.weekday >= 1 && d.weekday <= 5,
+    );
     if (selectedDate == null) return;
 
-    // Selecciona la hora
-    final TimeOfDay? selectedTime = await showTimePicker(
+    selectedTime = await showTimePicker(
       context: context,
-      initialTime: const TimeOfDay(hour: 7, minute: 0),
+      initialTime: const TimeOfDay(hour: 8, minute: 0),
       helpText: 'Selecciona una hora',
     );
-
     if (selectedTime == null) return;
-
-    final isValidHour = selectedTime.hour >= 7 && selectedTime.hour < 20;
-
-    if (!isValidHour) {
-      showDialog(
-        context: context,
-        builder: (context) => const AlertDialog(
-          title: Text('Hora no válida'),
-          content: Text('La hora debe estar entre las 7:00 y las 20:00.'),
-        ),
-      );
-      return;
-    }
-
-    final unavailableDateTime = DateTime(
-      selectedDate.year,
-      selectedDate.month,
-      selectedDate.day,
-      selectedTime.hour,
-      selectedTime.minute,
-    );
-
-    final aulaDoc =
-        FirebaseFirestore.instance.collection('aulas').doc(widget.name);
-
-    await aulaDoc.collection('no_disponible').add({
-      'timestamp': unavailableDateTime.toIso8601String(),
-      'fecha_legible':
-          DateFormat('dd/MM/yyyy - HH:mm').format(unavailableDateTime),
-      'creado_en': FieldValue.serverTimestamp(),
-    });
-
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Marcado como no disponible a las: ${DateFormat('HH:mm').format(unavailableDateTime)}',
-          ),
-        ),
-      );
-    }
   }
+
+  // Validaciones comunes
+  final unavailableDateTime = DateTime(
+    selectedDate.year,
+    selectedDate.month,
+    selectedDate.day,
+    selectedTime.hour,
+    selectedTime.minute,
+  );
+
+  if (unavailableDateTime.isBefore(now)) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('No puedes registrar horas en el pasado')),
+    );
+    return;
+  }
+
+  if (unavailableDateTime.hour < 8 || unavailableDateTime.hour >= 20) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('La hora debe estar entre las 8:00 y las 20:00')),
+    );
+    return;
+  }
+
+  // Guardar en Firestore
+  final aulaDoc = FirebaseFirestore.instance.collection('aulas').doc(widget.name);
+  await aulaDoc.collection('no_disponible').add({
+    'timestamp': unavailableDateTime.toIso8601String(),
+    'fecha_legible': DateFormat('dd/MM/yyyy - HH:mm').format(unavailableDateTime),
+    'creado_en': FieldValue.serverTimestamp(),
+  });
+
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Marcado como no disponible a las: ${DateFormat('HH:mm').format(unavailableDateTime)}',
+        ),
+      ),
+    );
+  }
+}
+
 }
